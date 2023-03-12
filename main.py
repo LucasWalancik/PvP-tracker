@@ -18,7 +18,7 @@ def show_image( ROI ):
     plt.show()
     x=input()
 
-
+#TEST COMMENT
 
 def get_ROI( phase, image ):
     if ("Finding opponent" == phase) or ("Battle starting start" == phase) or ("Battle starting" == phase):
