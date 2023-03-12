@@ -1,12 +1,23 @@
 import cv2
-import time
-from PIL import Image
-from pytesseract import pytesseract
+#import time
+#from PIL import Image
+#from pytesseract import pytesseract
 import matplotlib.pyplot as plt
+import easyocr
+reader = easyocr.Reader(['en']) 
 
 
 #import IPython.display as ipd
 #from tqdm import tqdm
+
+
+
+def show_image( ROI ):
+    fig, ax = plt.subplots()
+    ax.imshow( ROI )
+    plt.show()
+    x=input()
+
 
 
 def get_ROI( phase, image ):
@@ -19,8 +30,11 @@ def get_ROI( phase, image ):
     return ROI
 
 def sanitize_text( text ):
+    if 0 == len( text ):
+        return ""
+    text = text[ 0 ]
     text = text.strip()
-    text = text.strip(".. ")
+    text = text.strip(". ")
     text = text.strip()
     #text.strip(".")
     return text
@@ -31,30 +45,14 @@ def get_current_second( captured_video, current_frame ):
     return round( current_second, 2 )
 
 def setup():
-    path_to_tesseract = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    pytesseract.tesseract_cmd = path_to_tesseract
+    #path_to_tesseract = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    #pytesseract.tesseract_cmd = path_to_tesseract
+    pass
 
 def choose_battle():
     #has to be improved
-    captured_video = cv2.VideoCapture( "2.mp4" )
+    captured_video = cv2.VideoCapture( "1.mp4" )
     return captured_video
-
-
-
-def confirm( text_to_find, captured_video, phase ):
-    pass
-
-
-def loop_until_found( text_to_find, captured_video, phase, FRAMES_TO_SKIP = 10 ):
-    was_frame_captured, frame = captured_video.read()
-    frames_passed = FRAMES_TO_SKIP
-    while was_frame_captured:
-        if FRAMES_TO_SKIP == frames_passed:
-            ROI = get_ROI( phase, frame )
-            text = pytesseract.image_to_string( ROI )
-            text = sanitize_text( text )
-            if text_to_find == text:
-                pass
 
 
 def finding_opponent( captured_video ):
@@ -73,9 +71,11 @@ def finding_opponent( captured_video ):
         if FRAMES_TO_SKIP == frames_passed:
 
             ROI = get_ROI( phase, frame )
-            text = pytesseract.image_to_string( ROI )
+            #show_image( ROI )
+            text = reader.readtext( ROI, detail=0 )
+            #text = pytesseract.image_to_string( ROI )
             text = sanitize_text( text )
-            print( f"Current phase: #{phase}# current text: {text}")
+            #print( f"Current phase: #{phase}# current text: {text}")
 
             if "Finding opponent" == phase:
                 if "Finding opponent" == text:
@@ -97,29 +97,22 @@ def finding_opponent( captured_video ):
                     print ( f"Battle starting has stopped showing at: { battle_starting_stop } s." )
                     phase = "Opponent info"
                     ROI = get_ROI( phase, frame )
-                    text = pytesseract.image_to_string( ROI )
+                    #text = pytesseract.image_to_string( ROI )
+                    text = reader.readtext( ROI, detail=0 )
                     text = sanitize_text( text )
                     FRAMES_TO_SKIP = 1
 
 
             if "Opponent info" == phase:
                 red_nicknames.append( text )
-                print (red_nicknames)
                 if 5 == len( red_nicknames ):
                     unique_names = set( red_nicknames )
                     if 1 == len( unique_names ):
                         opponent_nickname = red_nicknames[ 0 ]
                         ROI = get_ROI( "Opponent rank", frame )
-                        opponent_rank = pytesseract.image_to_string( ROI )
-                        print( f"orank: #{opponent_rank}#")
+                        opponent_rank = reader.readtext( ROI, detail=0 )
+                        #opponent_rank = pytesseract.image_to_string( ROI )
                         opponent_rank = sanitize_text( opponent_rank )
-                        print( f"2orank: #{opponent_rank}#")
-                        
-                        fig, ax = plt.subplots()
-                        ax.imshow( ROI )
-                        fig.show()
-                        x=input()
-                        #get_rank
                         phase = "Final countdown"
                         FRAMES_TO_SKIP = 10
                     else:
@@ -127,7 +120,9 @@ def finding_opponent( captured_video ):
 
 
             if "Final countdown" == phase:
-                print( f" Nickname: #{opponent_nickname}#" )
+                print( f"Finding opponent start: {finding_opponent_start}s")
+                print( f"Battle starting start: {battle_starting_start}s")
+                print( f"Nickname: #{opponent_nickname}#" )
                 print( f"Rank: #{opponent_rank}#")
                 exit( 0 )
             
